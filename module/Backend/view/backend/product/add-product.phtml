@@ -1,0 +1,314 @@
+<?php
+
+    function repopulateTableVariants($inputfilters)
+    {
+
+        $string = '';
+        foreach($inputfilters as $key => $inputfilter){
+
+            $rawValues = $inputfilter->getRawValues();
+            $string .= createVariantError($inputfilter);
+            $string .= '<tr>';
+            $string .= '<td><input type="text" class="form-control variant-form" name="variants['.$key.'][variant]" value="'. htmlspecialchars( $rawValues['variant'] ) . '"></td>';
+            $string .= '<td><input type="text" class="form-control variant-form" name="variants['.$key.'][sku]"     value="'. htmlspecialchars( $rawValues['sku'] ) . '"></td>';
+            $string .= '<td><input type="text" class="form-control variant-form" name="variants['.$key.'][cost]"    value="'. htmlspecialchars( $rawValues['cost'] ) . '"></td>';
+            $string .= '<td><input type="text" class="form-control variant-form" name="variants['.$key.'][price]"   value="'. htmlspecialchars( $rawValues['price'] ) . '"></td>';
+            $string .= '<td><input type="text" class="form-control variant-form" name="variants['.$key.'][stock]"   value="'. htmlspecialchars( $rawValues['stock'] ) . '"></td>';
+            $string .= '<td><a href="#" onClick="removeTr(event, this)"> <i class="fa fa-times-circle"></i> </a></td>';
+            $string .= '</tr>'; 
+        }
+        return $string;
+    }
+
+    function createVariantError(& $inputfilter)
+    {
+            if($inputfilter->isValid()) return '';
+            $messages = $inputfilter->getMessages();
+            $string = '<tr>';
+            $string .= '<td colspan="6">';
+            $string .= createInputFilterMessage($messages);
+            $string .= '</td>';
+            $string .= '</tr>';
+            return $string;
+    }
+
+    function createInputFilterMessage($messages)
+    {
+            $string = '<div class="alert alert-warning alert-dismissable">';
+            $string .= '    <i class="fa fa-warning"></i>';
+            $string .= '    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>';
+
+            foreach($messages as $key => $errorMessages){               
+                    foreach($errorMessages as $message)
+                    $string .= '       <p><i class="fa fa-warning"></i> '. $key.': '.  $message.'</p>';
+            }
+            $string .= '</div>';
+            return $string;
+    }
+
+    function displayMainProductError($inputfilter)
+    {
+        if($inputfilter->isValid())
+            return '';
+
+        return createInputFilterMessage($inputfilter->getMessages());
+    }
+
+?>
+
+<div class="box box-default">
+
+<div class="box-body">
+<form role="form" method="POST" action="<?php echo $this->basePath();?>/product/add-product">
+    <div class="row">
+        <div class="col-md-12">
+                <?php if(isset($success) && $success == TRUE) { ?>
+                    <div class="alert alert-success alert-dismissable">
+                        <i class="fa fa-check"></i>
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        <b><?php echo $productName; ?> </b> Added! You can add another product or you can manage your stock level.
+                    </div>
+                <?php }?>
+
+                <div class="box-header">
+                    <h4 class="box-title">Product Detail</h4>
+                </div>
+                <!-- form start -->
+                    <div class="box-body">
+                        <?php 
+                        if(isset($result['inputfilters']['main'])) {
+                            echo displayMainProductError($result['inputfilters']['main']);
+                        }
+                        ?>
+                        <div class="form-group">
+                            <label for="itemname">Item Name </label>
+                            
+                            <input type="text" class="form-control" id="itemname" name="itemname" placeholder="Item Name"
+                                   value="<?php if(isset($rawValues['itemname'])){ echo htmlspecialchars($rawValues['itemname']); }?>">
+                        </div>
+                    </div>
+
+                    <div class="box-header box-divider">
+                        <h4 class="box-title">Product Variant</h4>
+                    </div>
+
+
+                    <div class="box-body">
+
+                        <div class="form-group">
+                            <label for="variantName">Variant Name </label>
+                            
+                            <input type="text" class="form-control" id="variantName" name="variantName" placeholder="Variant Name"
+                                   value="<?php if(isset($rawValues['variantName'])){ echo htmlspecialchars($rawValues['variantName']); }?>">
+                        </div>
+                        <div class="form-group">                 
+                            <label for="sku">SKU </label>
+                            
+                            <input type="text" class="form-control" id="sku" name="sku" placeholder="SKU"
+                                   value="<?php if(isset($rawValues['sku'])){ echo htmlspecialchars($rawValues['sku']); }?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cost">Buy Price </label>
+                            
+                            <input type="text" class="form-control" id="cost" name="cost" placeholder="Buy Price"
+                                   value="<?php if(isset($rawValues['cost'])){ echo htmlspecialchars($rawValues['cost']); }?>">
+                        </div>
+
+
+                        <div class="form-group">
+                            <label for="price">Price (SRP) </label>
+                            <input type="text" class="form-control" id="price" name="price" placeholder="SRP"
+                                   value="<?php if(isset($rawValues['price'])){ echo htmlspecialchars($rawValues['price']); }?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="cost">Initial Stock </label>
+                            <input type="text" class="form-control" id="stock" name="stock" placeholder="Initial Stock"
+                                   value="<?php if(isset($rawValues['stock'])){ echo htmlspecialchars($rawValues['stock']); }?>">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" id="add-variant-btn" class="btn btn-info btn-sm">Add Variant</button>
+                        </div>
+                    </div><!-- /.box-body -->
+
+                    <div class="box-header box-divider">
+                        <h4 class="box-title">Variant Details <span id="variant-counter">(0 variants)</span></h4> 
+                    </div>
+
+
+                <?php 
+
+               if(isset($result['zeroVariant']) && $result['zeroVariant'] === TRUE ){
+
+                    $string  = '<div class="callout callout-warning">';
+                    $string .= '       <p><i class="fa fa-warning"></i> No Variants, Please add at least one variant.</p>';
+                    $string .= '</div>';
+
+                    echo $string;
+                }?>
+                        <div class="box-body">
+                                    <table class="table table-bordered">
+                                        <tbody  id="variant-list" >
+                                        <tr>
+                                            <th>Variant</th>
+                                            <th>SKU</th>
+                                            <th>Buy Price</th>
+                                            <th>SRP</th>
+                                            <th>Stock on Hand</th>
+                                            <th>&nbsp;</th>
+                                        </tr>
+
+                                        <?php
+
+                                        if(isset($result['inputfilters']['variants']) && count($result['inputfilters']['variants']) > 0){
+                                            echo repopulateTableVariants($result['inputfilters']['variants']);
+                                        }
+                                        ?>
+<!--                                         <tr>
+                                            <td><input type="text" class="form-control variant-form" name="variants[1][variant]" value="ABC/D"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[1][sku]"  value="SU1"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[1][cost]" value="10.4"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[1][price]" value="30.5"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[1][stock]" value="52"></td>
+                                            <td><a href="#" onClick="removeTr(event, this)"> <i class="fa fa-times-circle"></i> </a></td>
+                                            
+                                        <tr>
+                                            <td><input type="text" class="form-control variant-form" name="variants[2][variant]" value="22ABC/D"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[2][sku]"  value="22SKU1"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[2][cost]" value="2210.4"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[2][price]" value="2230.5"></td>
+                                            <td><input type="text" class="form-control variant-form" name="variants[2][stock]" value="2252"></td>
+                                            <td><a href="#" onClick="removeTr(event, this)"> <i class="fa fa-times-circle"></i> </a></td>
+                                            
+                                        </tr> -->
+                                    </tbody></table>
+                        </div>
+
+
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+                    </div>
+
+        </div><!-- /.col (left) -->
+    </div>
+</form>
+</div>
+</div>
+
+
+<script type="text/javascript">
+
+    var variantCounter = 0;
+    updateVariantCounter();
+
+
+    function updateVariantCounter(){
+        var text = 'Variants';
+        if(variantCounter <= 1){
+            text = 'Variant';
+        }
+        if(variantCounter <= 0){
+            variantCounter = 0;
+        }
+        document.getElementById("variant-counter").innerText = '('+ variantCounter +' ' + text + ')';
+    }
+
+    function removeTr(event, aelement)
+    {
+        event.preventDefault();
+        aelement.parentNode.parentNode.remove();
+        variantCounter = variantCounter - 1;
+        updateVariantCounter();
+    }
+
+    $(document).ready(function() {
+        $('#add-variant-btn').click(function(){
+
+            
+            variantName = '';
+            itemname   = document.getElementById("itemname").value;
+            variant   = document.getElementById("variantName").value;
+            if(variant != ''){
+                variantName = itemname;
+            }
+            if(variant != ''){
+                variantName = variantName + '/' + variant;
+            }
+
+            
+            input_variantName = document.createElement("input");
+            input_variantName.setAttribute("type", "text");
+            input_variantName.setAttribute("class", "form-control variant-form");
+            input_variantName.setAttribute("name", "variants["+variantCounter+"][variant]");
+            input_variantName.setAttribute("value", variantName);
+            variant_tr_td_1 = document.createElement("td");
+            variant_tr_td_1.appendChild(input_variantName);
+
+            
+            sku       = document.getElementById("sku").value;
+            input_sku = document.createElement("input");
+            input_sku.setAttribute("type", "text");
+            input_sku.setAttribute("class", "form-control variant-form");
+            input_sku.setAttribute("name", "variants["+variantCounter+"][sku]");
+            input_sku.setAttribute("value", sku);
+            variant_tr_td_2 = document.createElement("td");
+            variant_tr_td_2.appendChild(input_sku);
+
+            cost       = document.getElementById("cost").value;
+            input_cost = document.createElement("input");
+            input_cost.setAttribute("type", "text");
+            input_cost.setAttribute("class", "form-control variant-form");
+            input_cost.setAttribute("name", "variants["+variantCounter+"][cost]");
+            input_cost.setAttribute("value", cost);
+            variant_tr_td_3 = document.createElement("td");
+            variant_tr_td_3.appendChild(input_cost);
+
+
+            price       = document.getElementById("price").value;
+            input_price = document.createElement("input");
+            input_price.setAttribute("type", "text");
+            input_price.setAttribute("class", "form-control variant-form");
+            input_price.setAttribute("name", "variants["+variantCounter+"][price]");
+            input_price.setAttribute("value", price);
+            variant_tr_td_4 = document.createElement("td");
+            variant_tr_td_4.appendChild(input_price);
+
+
+            stock       = document.getElementById("stock").value;
+            input_stock = document.createElement("input");
+            input_stock.setAttribute("type", "text");
+            input_stock.setAttribute("class", "form-control variant-form");
+            input_stock.setAttribute("name", "variants["+variantCounter+"][stock]");
+            input_stock.setAttribute("value", stock);
+            variant_tr_td_5 = document.createElement("td");
+            variant_tr_td_5.appendChild(input_stock);
+
+            // <td><a href="#" onClick="removeTr(this)"> <i class="fa fa-times-circle"></i> </a></td>
+            removeIcon = document.createElement("i");
+            removeIcon.setAttribute("class", "fa fa-times-circle");
+            removeLink = document.createElement("a");                   
+            removeLink.setAttribute("href","javascript:return false;");
+            removeLink.setAttribute("onClick","removeTr(event, this)");
+            removeLink.appendChild(removeIcon);
+            variant_tr_td_6 = document.createElement("td");
+            variant_tr_td_6.appendChild(removeLink); 
+
+
+            table_tbody = document.getElementById("variant-list");
+            variant_tr = document.createElement("tr");
+
+            variant_tr.appendChild(variant_tr_td_1);
+            variant_tr.appendChild(variant_tr_td_2);
+            variant_tr.appendChild(variant_tr_td_3);
+            variant_tr.appendChild(variant_tr_td_4);
+            variant_tr.appendChild(variant_tr_td_5);
+            variant_tr.appendChild(variant_tr_td_6);
+
+            table_tbody.appendChild(variant_tr);
+            variantCounter = variantCounter +1;
+            updateVariantCounter();
+
+        });
+    });
+
+</script>

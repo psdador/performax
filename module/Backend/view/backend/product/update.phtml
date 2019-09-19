@@ -1,0 +1,95 @@
+<?php
+
+    $messages = NULL;
+    $rawValues = $product;
+    if(isset($inputFilter))
+    {
+        $messages = $inputFilter->getMessages();
+        $rawValues = array_merge($rawValues, $inputFilter->getRawValues());
+
+        var_dump($messages);
+    }
+
+
+    function displayErrorIfAny(& $messages, $formName)
+    {
+        $string = '';
+        if(!empty($messages[$formName])) 
+        {
+            $string = '</br>';
+
+            foreach($messages[$formName] as $message)
+            {
+                $string .= '<i class="fa fa-times-circle-o"></i> '; 
+                $string .= '<span class="form-error-message" style="font-weight:400">' . $message . "</span></br>";
+            }
+
+  
+        }
+
+        return $string;
+    }
+
+    function hasError(& $messages, $formName)
+    {
+        if(!empty($messages[$formName])){
+            return "has-error";
+        }
+    }
+
+?>
+
+<div class="row">
+    <div class="col-md-12">
+            <?php if(isset($success) && $success == TRUE) { ?>
+                <div class="alert alert-success alert-dismissable">
+                    <i class="fa fa-check"></i>
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                    <b><?php echo $productName?> </b> Successfully Updated!
+                </div>
+            <?php }?>
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">Update Product : <?php echo htmlspecialchars($rawValues['_id']);?></h3>
+            </div><!-- /.box-header -->
+            <!-- form start -->
+
+            <form role="form" method="POST" action="<?php echo $this->basePath();?>/product/update?product_id=<?php echo htmlspecialchars($rawValues['_id']);?>">
+                <div class="box-body">
+                    <div class="form-group <?php echo hasError($messages, 'sku');?>">                 
+                        <label for="sku">SKU: <?php echo displayErrorIfAny($messages, 'sku');?></label>
+                        <input type="hidden" name="_id" value="<?php echo htmlspecialchars($rawValues['_id']);?>">
+                        <input type="text" class="form-control" id="sku" name="sku" placeholder="SKU"
+                               value="<?php if(isset($rawValues['sku'])){ echo htmlspecialchars($rawValues['sku']); }?>">
+                    </div>
+                    <div class="form-group <?php echo hasError($messages, 'itemname');?>">
+                        <label for="itemname">Item Name: <?php echo displayErrorIfAny($messages, 'itemname');?></label>
+                        
+                        <input type="text" class="form-control" id="itemname" name="itemname" placeholder="Item Name"
+                               value="<?php if(isset($rawValues['itemname'])){ echo htmlspecialchars($rawValues['itemname']); }?>">
+                    </div>
+                    <div class="form-group <?php echo hasError($messages, 'costprice');?>">
+                        <label for="costprice">Capital Price: <?php echo displayErrorIfAny($messages, 'costprice');?></label>
+                        
+                        <input type="text" class="form-control" id="costprice" name="costprice" placeholder="Cost Price"
+                               value="<?php if(isset($rawValues['costprice'])){ echo htmlspecialchars($rawValues['costprice']); }?>">
+                    </div>
+                    <div class="form-group <?php echo hasError($messages, 'price');?>">
+                        <label for="price">Price (SRP): <?php echo displayErrorIfAny($messages, 'price');?></label>
+                        <input type="text" class="form-control" id="price" name="price" placeholder="SRP"
+                               value="<?php if(isset($rawValues['price'])){ echo htmlspecialchars($rawValues['price']); }?>">
+                    </div>
+                    <div class="form-group <?php echo hasError($messages, 'stock');?>">
+                        <label for="costprice">Capital Price: <?php echo displayErrorIfAny($messages, 'stock');?></label>
+                        <input type="text" class="form-control" id="stock" name="stock" placeholder="stock level"
+                               value="<?php if(isset($rawValues['stock'])){ echo htmlspecialchars($rawValues['stock']); }?>">
+                    </div>
+                </div><!-- /.box-body -->
+
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div><!-- /.col (left) -->
+</div>
